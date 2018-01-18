@@ -21,11 +21,11 @@ contract SinglePrisonersDilemma {
   address prisonerTwo;
 
   struct Prisoner {
-    bytes32 committment;
+    bytes32 commitment;
     uint action;
   }
 
-  mapping(uint => bool) paid;
+  mapping(address => bool) paid;
 
   mapping (address => Prisoner) prisoners;
 
@@ -62,12 +62,12 @@ contract SinglePrisonersDilemma {
       uint _collabPayout,
       uint _defectPayout,
       uint _splitPayoutHigh,
-      uint _splitPayoutLow,
+      uint _splitPayoutLow
   ) payable public {
     // sanity check
-    require (_endCommit < _endReveal);
+    require (_timeUntilEndCommit < _timeUntilEndReveal);
 
-    // save address
+    // save addresses
     warden = msg.sender;
     prisonerOne = _prisonerOne;
     prisonerTwo = _prisonerTwo;
@@ -78,21 +78,18 @@ contract SinglePrisonersDilemma {
     endReveal = now + _timeUntilEndReveal;
 
     // payments
-    collabPayout =  _collabPayout,
-    defectPayout = _defectPayout,
-    splitPayoutHigh = _splitPayoutHigh,
-    splitPayoutLow = _splitPayoutLow,
+    collabPayout =  _collabPayout;
+    defectPayout = _defectPayout;
+    splitPayoutHigh = _splitPayoutHigh;
+    splitPayoutLow = _splitPayoutLow;
 
     require (2 * collabPayout <= msg.value);
   }
-
-
 
   function commit(bytes32 commitment) public onlyCommit onlyPrisoners {
     require(prisoners[msg.sender].commitment == bytes32(0));
     prisoners[msg.sender].commitment = commitment;
   }
-
 
   function reveal(uint salt, uint action) public onlyReveal onlyPrisoners {
     require(keccak256(salt, action) == prisoners[msg.sender].commitment);
@@ -117,7 +114,6 @@ contract SinglePrisonersDilemma {
     }
   }
 
-
   function getWardenPayout() public constant returns (uint) {
     uint toPay = 0;
 
@@ -129,7 +125,7 @@ contract SinglePrisonersDilemma {
       toPay += getPrisonerPayout(prisonerTwo);
     }
 
-    return this.balance = toPay;
+    return this.balance - toPay;
   }
 
   function getPrisonerPayout(address prisoner) public constant returns (uint) {
